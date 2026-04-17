@@ -1,0 +1,64 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Kenya Tools Hub</title>
+  <link rel="stylesheet" href="styles.css">
+</head>
+<body>
+
+  <h1>🇰🇪 Kenya Tools Hub</h1>
+
+  <nav>
+    <button onclick="showTool('helb')">HELB Calculator</button>
+    <button onclick="showTool('grade')">Grade Calculator</button>
+    <button onclick="showTool('invoice')">Invoice Generator</button>
+  </nav>
+
+  <!-- HELB -->
+  <section id="helb" class="tool">
+    <h2>HELB Loan Calculator</h2>
+    <input type="number" id="loan" placeholder="Loan Amount">
+    <input type="number" id="years" placeholder="Repayment Years">
+    <button onclick="calculateHELB()">Calculate</button>
+    <p id="helbResult"></p>
+  </section>
+
+  <!-- Grade -->
+  <section id="grade" class="tool" style="display:none;">
+    <h2>Grade Calculator</h2>
+    <input type="number" id="marks" placeholder="Enter Marks">
+    <button onclick="calculateGrade()">Calculate</button>
+    <p id="gradeResult"></p>
+  </section>
+
+  <!-- Invoice -->
+  <section id="invoice" class="tool" style="display:none;">
+    <h2>Invoice Generator</h2>
+
+    <div id="customerDetails">
+      <input type="text" id="businessName" placeholder="Your Business Name">
+
+      <input type="text" id="customerName" placeholder="Customer Name">
+      <input type="text" id="contactInfo" placeholder="Phone or Email">
+    </div>
+    
+    <div id="itemsBought">
+      <input type="text" id="item" placeholder="Item Name">
+      <input type="number" id="quantity" placeholder="Quantity">
+      <input type="number" id="unitPrice" placeholder="Price per Unit">
+    </div>
+    
+    <button onclick="generateInvoice()">Add Item</button>
+    <input type="number" id="deleteIndex" placeholder="Enter item number to delete">
+    <button onclick="deleteItem()">Delete Item</button>
+
+    <ul id="invoiceList"></ul>
+    <h3 id="total"></h3>
+    <button onclick="downloadPDF()">Download PDF</button>
+  </section>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+  <script src="script.js"></script>
+</body>
+</html>
