@@ -1,18 +1,56 @@
+@page {
+  size: A4;
+  margin: 100mm;
+}
+
 body {
-  font-family: Arial;
+  margin: 0;
+  background: #ccc;
+  font-family: Arial, sans-serif;
   font-size: 16px;
-  text-align: center;
   padding: 20px;
+}
+
+h1, nav {
+  text-align: center;
+}
+
+.invoice-container {
+  width: 210mm;
+  min-height: 297mm;
+  margin: 20px auto;
+  background: white;
+  padding: 20mm;
+  /*box-sizing: border-box;
+  text-align: left;*/ /* 🔥 ADD THIS */
+}
+
+/* PRINT MODE */
+@media print {
+  body {
+    background: none;
+  }
+
+  .invoice-container {
+    margin: 0;
+    width: auto;
+    min-height: auto;
+    box-shadow: none;
+    padding: 0;
+  }
 }
 
 nav button {
   margin: 10px;
   padding: 10px;
   cursor: pointer;
+  font-size: 16px;
+  font-weight: bold;
 }
 
 .tool {
   margin-top: 20px;
+  padding: 15px;
 }
 
 #customerDetails,
@@ -24,7 +62,25 @@ nav button {
   margin-bottom: 15px;
 }
 
+label {
+  display: block;
+  margin-top: 10px;
+  font-weight: bold;
+}
+
 input {
   width: 250px;
+  display: block;
+  font-size: 18px;
+  margin-bottom: 10px;
   padding: 10px;
+}
+button {
+  margin-top: 10px;
+  font-size: 16px;
+  font-weight: bold;
+}
+
+#logoPreview {
+  align-self: flex-start;
 }

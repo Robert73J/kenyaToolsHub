@@ -1,3 +1,4 @@
+// ================= NAVIGATION =================
 function showTool(toolId) {
   document.querySelectorAll(".tool").forEach(tool => {
     tool.style.display = "none";
@@ -6,12 +7,34 @@ function showTool(toolId) {
   document.getElementById(toolId).style.display = "block";
 }
 
-// Helb Calculator
+// ================= HELPERS =================
+function generateInvoiceNumber() {
+  let year = new Date().getFullYear();
+  let random = Math.floor(100 + Math.random() * 900);
+  return `INV-${year}-${random}`;
+}
+
+function formatDate() {
+  let d = new Date();
+  let day = String(d.getDate()).padStart(2, '0');
+  let month = String(d.getMonth() + 1).padStart(2, '0');
+  let year = d.getFullYear();
+  return `${day}/${month}/${year}`;
+}
+
+function formatKES(amount) {
+  return "KES " + Number(amount).toLocaleString("en-KE", {
+    minimumFractionDigits: 2,
+    maximumFractionDigits: 2
+  });
+}
+
+// ================= HELB =================
 function calculateHELB() {
   let loan = document.getElementById("loan").value;
   let years = document.getElementById("years").value;
   
-  let interest = 0.04; // 4%
+  let interest = 0.04;
   let total = loan * (1 + interest * years);
   let monthly = total / (years * 12);
   
@@ -19,7 +42,7 @@ function calculateHELB() {
     "Monthly Payment: KES " + monthly.toFixed(2);
 }
 
-// Grade Calculator
+// ================= GRADE =================
 function calculateGrade() {
   let marks = document.getElementById("marks").value;
   let grade = "";
@@ -34,142 +57,372 @@ function calculateGrade() {
     "Grade: " + grade;
 }
 
-// Invoice Generator
-let total = 0;
+// ================= INVOICE CORE =================
 let items = [];
+let total = 0;
+let currentInvoiceNumber = generateInvoiceNumber();
 
+// ➜ ADD ITEM
 function generateInvoice() {
   let item = document.getElementById("item").value;
   let quantity = parseFloat(document.getElementById("quantity").value);
   let unitPrice = parseFloat(document.getElementById("unitPrice").value);
   
-  if (!item || isNaN(quantity) || isNaN(unitPrice)) return;
+  if (!item || isNaN(quantity) || isNaN(unitPrice)) {
+    alert("Fill all item fields correctly");
+    return;
+  }
   
   let totalPrice = quantity * unitPrice;
   
   items.push({ item, quantity, unitPrice, totalPrice });
-  
   total += totalPrice;
   
   renderInvoice();
   
-  // Clear inputs
+  // clear inputs
   document.getElementById("item").value = "";
   document.getElementById("quantity").value = "";
   document.getElementById("unitPrice").value = "";
 }
 
-function generateInvoiceNumber() {
-  return "INV-" + Date.now();
-}
-
-function formatDate() {
-  let d = new Date();
-
-  let day = String(d.getDate()).padStart(2, '0');
-  let month = String(d.getMonth() + 1).padStart(2, '0');
-  let year = String(d.getFullYear()).slice(-2);
-
-  return `${day}/${month}/${year}`;
-}
-
+// ➜ RENDER LIST
 function renderInvoice() {
   let list = document.getElementById("invoiceList");
   list.innerHTML = "";
   
   items.forEach((entry, index) => {
     let li = document.createElement("li");
-    
     li.innerText =
-      `${index + 1}. ${entry.item} - ${entry.quantity} x KES ${entry.unitPrice.toFixed(2)} = KES ${entry.totalPrice.toFixed(2)}`;
-    
+      `${index + 1}. ${entry.item} - ${entry.quantity} x ${formatKES(entry.unitPrice)} = ${formatKES(entry.totalPrice)}`;
     list.appendChild(li);
   });
   
   document.getElementById("total").innerText =
-    "Total: KES " + total.toFixed(2);
+    "Total: " + formatKES(total);
 }
 
+// ➜ DELETE ITEM
 function deleteItem() {
   let index = parseInt(document.getElementById("deleteIndex").value) - 1;
   
-  if (isNaN(index) || index < 0 || index >= items.length) return;
+  if (isNaN(index) || index < 0 || index >= items.length) {
+    alert("Invalid item number");
+    return;
+  }
   
   total -= items[index].totalPrice;
-  
   items.splice(index, 1);
   
   renderInvoice();
-  
   document.getElementById("deleteIndex").value = "";
 }
 
-function downloadPDF() {
+// ================= BUILD HTML =================
+function buildInvoiceHTML(logoDataURL=null) {
+  let businessName = document.getElementById("businessName").value || "Your Business Name";
+  let businessAddress = document.getElementById("businessAddress").value || "";
+  let customerName = document.getElementById("customerName").value || "Customer";
+  let contactInfo = document.getElementById("contactInfo").value || "-";
+  let dueDate = document.getElementById("dueDate").value || "-";
+  let vatRate = parseFloat(document.getElementById("vatRate").value) || 0;
+  
+  let date = formatDate();
+  
+  let subTotal = 0;
+  
+  let rows = items.map((entry, index) => {
+    subTotal += entry.totalPrice;
+    return `
+      <tr>
+       <td style="text-align:center;">${index + 1}</td>
+       <td style="text-align:center;">${entry.item}</td>
+       <td style="text-align:center;">${entry.quantity}</td>
+       <td style="text-align:center;">${formatKES(entry.unitPrice)}</td>
+       <td style="text-align:center;">${formatKES(entry.totalPrice)}</td>
+      </tr>
+    `;
+  }).join("");
+  
+  let vatAmount = subTotal * (vatRate / 100);
+  let grandTotal = subTotal + vatAmount;
+  
+  
+  
+  return `   
+   <div class="invoice-container" style="font-family: Arial, sans-serif; color: #222;">
+
+   <!-- TOP HEADER ROW -->
+   <div style="
+    display:flex;
+    justify-content:space-between;
+    background:#f5f5f5;
+    padding:12px 0px;
+    margin-bottom:20px;
+  ">
+    
+    <!-- LEFT -->
+    <div style="display:flex; align-items:center; gap:15px;">
+      <img src="${logoDataURL || 'images/default-logo.jpeg'}" 
+           style="height:60px; width:60px; object-fit:contain; border-radius:6px;">
+    
+      <div>
+        <h2 style="margin:0; font-size:20px;">${businessName}</h2>
+        <p style="margin:2px 0; font-size:13px; color:#555;">${businessAddress}</p>
+      </div>
+    </div>
+  
+    <!-- RIGHT -->
+    <div style="text-align:right; margin-rght:5px;">
+      <h1 style="margin:0; font-size:22px;">INVOICE</h1>
+      <p style="margin:3px 0;"># ${currentInvoiceNumber}</p>
+      <p style="margin:3px 0;">Date: ${date}</p>
+      <p style="margin:3px 0;">Due: ${dueDate}</p>
+    </div>
+  
+  </div>
+  
+  
+  <!-- BILL TO (LEFT aligned under business) -->
+  <div style="margin-bottom:20px;">
+    <h4 style="margin:0 0 5px 0; color:#444;">Bill To</h4>
+    <p style="margin:2px 0; font-weight:bold;">${customerName}</p>
+    <p style="margin:2px 0; color:#555;">${contactInfo}</p>
+  </div>
+
+  <!-- TABLE -->
+
+  <table style="width:100%; border-collapse: collapse; margin-top:10px; font-size:14px;">
+    <thead>
+      <tr style="background:#eaeaea;">
+        <th style="border:1px solid #ddd; padding:10px; font-size:13px;">#</th>
+        <th style="border:1px solid #ddd; padding:10px; font-size:13px;">Item</th>
+        <th style="border:1px solid #ddd; padding:10px; font-size:13px;">Qty</th>
+        <th style="border:1px solid #ddd; padding:10px; font-size:13px;">Unit Price</th>
+        <th style="border:1px solid #ddd; padding:10px; font-size:13px;">Total</th>
+      </tr>
+    </thead>
+    <tbody>
+      ${rows}
+    </tbody>
+  </table>
+
+  <!-- TOTALS -->
+  <div style="margin-top:25px; display:flex; justify-content:flex-end;">
+    <table style="border-collapse:collapse; min-width:260px; font-size:14px;">
+      
+      <tr>
+        <td style="padding:6px 10px;">Subtotal</td>
+        <td style="padding:6px 10px; text-align:right;">
+          ${formatKES(subTotal)}
+        </td>
+      </tr>
+  
+      <tr>
+        <td style="padding:6px 10px;">VAT (${vatRate}%)</td>
+        <td style="padding:6px 10px; text-align:right;">
+          ${formatKES(vatAmount)}
+        </td>
+      </tr>
+  
+      <tr>
+        <td style="padding:10px; font-weight:bold; border-top:2px solid #333;">
+          Total
+        </td>
+        <td style="padding:10px; text-align:right; font-weight:bold; border-top:2px solid #333;">
+          ${formatKES(grandTotal)}
+        </td>
+      </tr>
+  
+    </table>
+  </div>
+
+  <!-- FOOTER -->
+  <div style="margin-top:40px; text-align: left; font-size:12px; color:#888;">
+    Thank you for your business! <br>
+    <span style="font-size:11px;">Generated by Kenya Tools Hub</span>
+  </div>
+
+</div>
+`;
+}
+
+function handleLogoAndProceed(callback) {
+  const file = document.getElementById("logoUpload").files[0];
+  
+  if (file) {
+    const reader = new FileReader();
+    reader.onload = function(e) {
+      callback(e.target.result); // pass logo
+    };
+    reader.readAsDataURL(file);
+  } else {
+    callback(null); // no logo
+  }
+}
+
+function previewInvoice() {
   if (items.length === 0) {
     alert("Add at least one item");
     return;
   }
   
-  const { jsPDF } = window.jspdf;
-  const doc = new jsPDF();
-  
-  let businessName = document.getElementById("businessName").value || "Your Business Name";
-  let customerName = document.getElementById("customerName").value || "Customer";
-  let contactInfo = document.getElementById("contactInfo").value || "-";
-  
-  let invoiceNumber = generateInvoiceNumber();
-  let date = formatDate();
-  
-  // ===== HEADER =====
-  doc.setFontSize(18);
-  doc.text(businessName, 20, 20);
-  
-  doc.setFontSize(12);
-  doc.text("INVOICE", 150, 20);
-  doc.text("No: " + invoiceNumber, 150, 28);
-  doc.text("Date: " + date, 150, 36);
-  
-  doc.line(20, 40, 190, 40);
-  
-  // ===== CUSTOMER INFO =====
-  doc.text("Bill To:", 20, 50);
-  doc.text(customerName, 20, 58);
-  doc.text(contactInfo, 20, 66);
-  
-  // ===== TABLE =====
-  let y = 80;
-  
-  doc.text("No", 20, y);
-  doc.text("Item", 35, y);
-  doc.text("Qty", 110, y);
-  doc.text("Unit Price", 130, y);
-  doc.text("Total", 160, y);
-  
-  doc.line(20, y + 2, 190, y + 2);
-  
-  y += 10;
-  
-  items.forEach((entry, index) => {
-    doc.text(String(index + 1), 20, y);
-    doc.text(entry.item, 35, y);
-    doc.text(String(entry.quantity), 110, y);
-    doc.text("KES " + entry.unitPrice.toFixed(2), 130, y);
-    doc.text("KES " + entry.totalPrice.toFixed(2), 160, y);
+  handleLogoAndProceed((logo) => {
+    const win = window.open("", "_blank");
     
-    y += 10;
+    win.document.write(`
+      <html>
+        <head>
+          <title>Preview</title>
+         <style>
+            body {
+              font-family: Arial;
+              padding: 20px;
+              background: #ccc;
+            }
+          
+            .invoice-container {
+              width: 210mm;
+              margin: auto;
+              background: white;
+              padding: 20mm;
+            }
+          
+            table {
+              border-collapse: collapse;
+              width: 100%;
+            }
+          
+            th, td {
+              border: 1px solid #ddd;
+              padding: 8px;
+            }
+          </style>
+        </head>
+        <body>
+          ${buildInvoiceHTML(logo)}
+        </body>
+      </html>
+    `);
+    
+    win.document.close();
   });
-  
-  // ===== TOTAL =====
-  doc.line(20, y, 190, y);
-  y += 10;
-  
-  doc.setFontSize(14);
-  doc.text("Total: KES " + total.toFixed(2), 140, y);
-  
-  // ===== FOOTER =====
-  y += 20;
-  doc.setFontSize(10);
-  doc.text("Thank you for your business, welcome!", 20, y);
-  
-  doc.save("invoice.pdf");
 }
+
+function printInvoice() {
+  if (items.length === 0) {
+    alert("Add at least one item");
+    return;
+  }
+  
+  handleLogoAndProceed((logo) => {
+    const win = window.open("", "_blank");
+    
+    win.document.write(`
+      <html>
+        <head>
+          <title>Print</title>
+          <style>
+            body {
+              font-family: Arial;
+              padding: 20px;
+              background: #ccc;
+            }
+          
+            .invoice-container {
+              width: 210mm;
+              margin: auto;
+              background: white;
+              padding: 20mm;
+            }
+          
+            table {
+              border-collapse: collapse;
+              width: 100%;
+            }
+          
+            th, td {
+              border: 1px solid #ddd;
+              padding: 8px;
+            }
+          </style>
+        <body>
+          ${buildInvoiceHTML(logo)}
+        </body>
+      </html>
+    `);
+    
+    win.document.close();
+    
+    win.onload = () => win.print();
+  });
+}
+
+// ================= DOWNLOAD PDF =================
+function downloadInvoice() {
+  if (items.length === 0) {
+    alert("Add at least one item");
+    return;
+  }
+  
+  handleLogoAndProceed((logo) => {
+    const { jsPDF } = window.jspdf;
+    const doc = new jsPDF({
+      orientation: "portrait",
+      unit: "mm",
+      format: "a4"
+    });
+    
+    const fullHTML = `
+      <html>
+        <head>
+          <style>
+            body {
+              font-family: Arial;
+              width: 210mm;
+              margin: auto;
+              padding: 20px;
+            }
+
+            table {
+              border-collapse: collapse;
+              width: 100%;
+            }
+
+            th, td {
+              border: 1px solid #ddd;
+              padding: 8px;
+            }
+          </style>
+        </head>
+        <body>
+          ${buildInvoiceHTML(logo)}
+        </body>
+      </html>
+    `;
+    
+    doc.html(fullHTML, {
+      callback: function(doc) {
+        doc.save(`invoice-${currentInvoiceNumber}.pdf`);
+      },
+      x: 0,
+      y: 0,
+      width: 190,
+      windowWidth: 800
+    });
+  });
+}
+
+document.addEventListener("DOMContentLoaded", function() {
+  document.getElementById("logoUpload").addEventListener("change", function() {
+    const file = this.files[0];
+    
+    if (file) {
+      const reader = new FileReader();
+      reader.onload = function(e) {
+        document.getElementById("logoPreview").src = e.target.result;
+      };
+      reader.readAsDataURL(file);
+    }
+  });
+});

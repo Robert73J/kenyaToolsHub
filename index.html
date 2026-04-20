@@ -39,6 +39,22 @@
 
     <div id="customerDetails">
       <input type="text" id="businessName" placeholder="Your Business Name">
+      <!-- COMPANY DETAILS -->
+      <input type="text" id="businessAddress" placeholder="Business Address">
+      <!-- LOGO -->
+      <label for="logoUpload">Upload Business Logo</label>
+      <input type="file" id="logoUpload" accept="image/*">
+      
+      <!-- DEFAULT LOGO PREVIEW -->
+      <img id="logoPreview" src="images/default-logo.jpeg" 
+           style="height:60px; margin-top:10px; display:block;">
+           
+      <!-- DUE DATE -->
+      <label for="dueDate">Due Date</label>
+      <input type="date" id="dueDate">
+
+      <!-- VAT -->
+      <input type="number" id="vatRate" placeholder="VAT % (e.g 16)">
 
       <input type="text" id="customerName" placeholder="Customer Name">
       <input type="text" id="contactInfo" placeholder="Phone or Email">
@@ -53,11 +69,17 @@
     <button onclick="generateInvoice()">Add Item</button>
     <input type="number" id="deleteIndex" placeholder="Enter item number to delete">
     <button onclick="deleteItem()">Delete Item</button>
+    
+    <div id="invoicePreview" style="display:none;">
+      <div id="previewContent"></div>
+    </div>
 
     <ul id="invoiceList"></ul>
     <h3 id="total"></h3>
-    <button onclick="downloadPDF()">Download PDF</button>
+    <button onclick="previewInvoice()">Preview Invoice</button>
+    <button onclick="printInvoice()">Print Invoice</button>
   </section>
+  
   <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
   <script src="script.js"></script>
 </body>
