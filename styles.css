@@ -1,28 +1,23 @@
+/* A4 PAGE SETUP */
 @page {
   size: A4;
-  margin: 100mm;
+  margin: 0;
 }
 
+/* SCREEN BACKGROUND */
 body {
   margin: 0;
   background: #ccc;
-  font-family: Arial, sans-serif;
-  font-size: 16px;
-  padding: 20px;
 }
 
-h1, nav {
-  text-align: center;
-}
-
+/* INVOICE PAGE */
 .invoice-container {
   width: 210mm;
   min-height: 297mm;
   margin: 20px auto;
   background: white;
   padding: 20mm;
-  /*box-sizing: border-box;
-  text-align: left;*/ /* 🔥 ADD THIS */
+  box-sizing: border-box;
 }
 
 /* PRINT MODE */
@@ -30,14 +25,17 @@ h1, nav {
   body {
     background: none;
   }
-
+  
   .invoice-container {
+    width: 210mm;
+    min-height: 297mm;
     margin: 0;
-    width: auto;
-    min-height: auto;
-    box-shadow: none;
-    padding: 0;
+    padding: 20mm;
   }
+}
+
+h1, nav {
+  text-align: center;
 }
 
 nav button {
