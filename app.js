@@ -590,7 +590,7 @@ function downloadInvoice() {
   });
 }
 
-const APP_VERSION = "v1.4";
+const APP_VERSION = "v1.5";
 
 document.addEventListener("DOMContentLoaded", function() {
   
