@@ -22,11 +22,149 @@ function formatDate() {
   return `${day}/${month}/${year}`;
 }
 
-function formatKES(amount) {
-  return "KES " + Number(amount).toLocaleString("en-KE", {
-    minimumFractionDigits: 2,
-    maximumFractionDigits: 2
-  });
+function getCurrency() {
+  return document.getElementById("currency")?.value || "KES";
+}
+
+function formatMoney(amount) {
+  return getCurrency() + " " +
+    Number(amount).toLocaleString(undefined, {
+      minimumFractionDigits: 2,
+      maximumFractionDigits: 2
+    });
+}
+
+function invoiceStyles() {
+  return `
+@page{
+  size:A4;
+  margin:0;
+}
+
+body{
+  margin:0;
+  background:#ccc;
+  font-family:Arial,sans-serif;
+}
+
+.invoice-container{
+  width:210mm;
+  height:297mm;
+  margin:20px auto;
+  background:#fff;
+
+  padding:20mm 20mm 30mm 20mm;
+  box-sizing:border-box;
+
+  position:relative;
+  overflow:hidden;
+}
+
+@media print{
+  body{
+    background:none;
+  }
+
+  .invoice-container{
+    width:210mm;
+    height:297mm;
+    margin:0;
+    padding:20mm 20mm 30mm 20mm;
+    box-sizing:border-box;
+    overflow:hidden;
+  }
+}
+
+table{
+  width:100%;
+  border-collapse:collapse;
+  table-layout:fixed;
+}
+
+th,td{
+  border:1px solid #ddd;
+  padding:8px;
+}
+
+td{
+  word-wrap:break-word;
+}
+
+th{
+  background:#f5f5f5;
+}
+
+.money{
+  text-align:right;
+  padding-right:12px;
+  font-variant-numeric:tabular-nums;
+}
+
+.footer{
+  position:absolute;
+  left:20mm;
+  right:20mm;
+  bottom:12mm;
+  font-size:12px;
+  color:#888;
+}
+
+img{
+  max-width:100%;
+}
+
+*{
+  -webkit-print-color-adjust:exact;
+  print-color-adjust:exact;
+}
+`;
+}
+
+function pdfInvoiceStyles() {
+  return `
+body{
+  margin:0;
+  font-family:Arial,sans-serif;
+}
+
+.invoice-container{
+  width:210mm;
+  background:#fff;
+
+  padding:20mm 20mm 20mm 20mm;
+  box-sizing:border-box;
+
+  position:relative;
+}
+
+table{
+  width:100%;
+  border-collapse:collapse;
+  table-layout:fixed;
+}
+
+th,td{
+  border:1px solid #ddd;
+  padding:8px;
+}
+
+td{
+  word-wrap:break-word;
+}
+
+th{
+  background:#f5f5f5;
+}
+
+img{
+  max-width:100%;
+}
+
+*{
+  -webkit-print-color-adjust:exact;
+  print-color-adjust:exact;
+}
+`;
 }
 
 // ================= HELB =================
@@ -94,12 +232,12 @@ function renderInvoice() {
   items.forEach((entry, index) => {
     let li = document.createElement("li");
     li.innerText =
-      `${index + 1}. ${entry.item} - ${entry.quantity} x ${formatKES(entry.unitPrice)} = ${formatKES(entry.totalPrice)}`;
+      `${index + 1}. ${entry.item} - ${entry.quantity} x ${formatMoney(entry.unitPrice)} = ${formatMoney(entry.totalPrice)}`;
     list.appendChild(li);
   });
   
   document.getElementById("total").innerText =
-    "Total: " + formatKES(total);
+    "Total: " + formatMoney(total);
 }
 
 // ➜ DELETE ITEM
@@ -119,7 +257,7 @@ function deleteItem() {
 }
 
 // ================= BUILD HTML =================
-function buildInvoiceHTML(logoDataURL=null) {
+function buildInvoiceHTML(logoDataURL=null, isPDF=false) {
   let businessName = document.getElementById("businessName").value || "Your Business Name";
   let businessAddress = document.getElementById("businessAddress").value || "";
   let customerName = document.getElementById("customerName").value || "Customer";
@@ -138,8 +276,10 @@ function buildInvoiceHTML(logoDataURL=null) {
        <td style="text-align:center;">${index + 1}</td>
        <td style="text-align:center;">${entry.item}</td>
        <td style="text-align:center;">${entry.quantity}</td>
-       <td style="text-align:center;">${formatKES(entry.unitPrice)}</td>
-       <td style="text-align:center;">${formatKES(entry.totalPrice)}</td>
+       <td style="text-align:center;">${Number(entry.unitPrice).toLocaleString()}</td>
+       <td style="text-align:center;">${Number(entry.totalPrice).toLocaleString()}</td>
+       
+       
       </tr>
     `;
   }).join("");
@@ -149,101 +289,187 @@ function buildInvoiceHTML(logoDataURL=null) {
   
   
   
-  return `   
-   <div class="invoice-container" style="font-family: Arial, sans-serif;">
+  return `
+<div class="invoice-container" style="font-family:Arial,sans-serif;">
 
-   <!-- TOP HEADER ROW -->
-   <div style="
-    display:flex;
-    justify-content:space-between;
-    background:#f5f5f5;
-    padding:12px 0px;
-    margin-bottom:20px;
+<!-- TOP HEADER ROW -->
+<div style="
+display:flex;
+justify-content:space-between;
+background:#f5f5f5;
+padding:12px 0;
+margin-bottom:20px;
+align-items:flex-start;
+">
+
+  <!-- LEFT -->
+  <div style="display:flex; align-items:center; gap:15px; margin:5px;">
+    <img
+      src="${logoDataURL || 'images/default-logo.jpeg'}"
+      style="height:60px;width:60px;object-fit:contain;border-radius:6px;"
+    >
+
+    <div>
+      <h2 style="margin:5px;font-size:20px;">
+        ${businessName}
+      </h2>
+
+      <p style="margin:5px;font-size:13px;color:#555;">
+        ${businessAddress}
+      </p>
+    </div>
+  </div>
+
+  <!-- RIGHT -->
+  <div style="text-align:right; margin-right:5px;">
+    <h1 style="margin:0;font-size:22px;">INVOICE</h1>
+
+    <p style="margin:3px 0;">
+      # ${currentInvoiceNumber}
+    </p>
+
+    <p style="margin:3px 0;">
+      Date: ${date}
+    </p>
+
+    <p style="margin:3px 0;">
+      Due: ${dueDate}
+    </p>
+  </div>
+
+</div>
+
+
+<!-- BILL TO -->
+<div style="margin-bottom:20px;">
+  <h4 style="margin:0 0 5px 0;color:#444;">
+    Bill To
+  </h4>
+
+  <p style="margin:2px 0;font-weight:bold;">
+    ${customerName}
+  </p>
+
+  <p style="margin:2px 0;color:#555;">
+    ${contactInfo}
+  </p>
+</div>
+
+
+<!-- ITEMS TABLE -->
+<table style="
+width:100%;
+border-collapse:collapse;
+margin-top:10px;
+font-size:14px;
+">
+
+<thead>
+<tr style="background:#eaeaea;">
+  <th style="border:1px solid #ddd;padding:10px;font-size:13px;">#</th>
+  <th style="border:1px solid #ddd;padding:10px;font-size:13px;">Item</th>
+  <th style="border:1px solid #ddd;padding:10px;font-size:13px;">Qty</th>
+
+  <th style="
+  border:1px solid #ddd;
+  padding:10px;
+  font-size:13px;
+  text-align:right;
   ">
-    
-    <!-- LEFT -->
-    <div style="display:flex; align-items:center; gap:15px;">
-      <img src="${logoDataURL || 'images/default-logo.jpeg'}" 
-           style="height:60px; width:60px; object-fit:contain; border-radius:6px;">
-    
-      <div>
-        <h2 style="margin:0; font-size:20px;">${businessName}</h2>
-        <p style="margin:2px 0; font-size:13px; color:#555;">${businessAddress}</p>
-      </div>
-    </div>
-  
-    <!-- RIGHT -->
-    <div style="text-align:right; margin-rght:5px;">
-      <h1 style="margin:0; font-size:22px;">INVOICE</h1>
-      <p style="margin:3px 0;"># ${currentInvoiceNumber}</p>
-      <p style="margin:3px 0;">Date: ${date}</p>
-      <p style="margin:3px 0;">Due: ${dueDate}</p>
-    </div>
-  
-  </div>
-  
-  
-  <!-- BILL TO (LEFT aligned under business) -->
-  <div style="margin-bottom:20px;">
-    <h4 style="margin:0 0 5px 0; color:#444;">Bill To</h4>
-    <p style="margin:2px 0; font-weight:bold;">${customerName}</p>
-    <p style="margin:2px 0; color:#555;">${contactInfo}</p>
-  </div>
+    Unit Price (${getCurrency()})
+  </th>
 
-  <!-- TABLE -->
+  <th style="
+  border:1px solid #ddd;
+  padding:10px;
+  font-size:13px;
+  text-align:right;
+  ">
+    Total (${getCurrency()})
+  </th>
 
-  <table style="width:100%; border-collapse: collapse; margin-top:10px; font-size:14px;">
-    <thead>
-      <tr style="background:#eaeaea;">
-        <th style="border:1px solid #ddd; padding:10px; font-size:13px;">#</th>
-        <th style="border:1px solid #ddd; padding:10px; font-size:13px;">Item</th>
-        <th style="border:1px solid #ddd; padding:10px; font-size:13px;">Qty</th>
-        <th style="border:1px solid #ddd; padding:10px; font-size:13px;">Unit Price</th>
-        <th style="border:1px solid #ddd; padding:10px; font-size:13px;">Total</th>
-      </tr>
-    </thead>
-    <tbody>
-      ${rows}
-    </tbody>
-  </table>
+</tr>
+</thead>
 
-  <!-- TOTALS -->
-  <div style="margin-top:25px; display:flex; justify-content:flex-end;">
-    <table style="border-collapse:collapse; min-width:260px; font-size:14px;">
-      
-      <tr>
-        <td style="padding:6px 10px;">Subtotal</td>
-        <td style="padding:6px 10px; text-align:right;">
-          ${formatKES(subTotal)}
-        </td>
-      </tr>
-  
-      <tr>
-        <td style="padding:6px 10px;">VAT (${vatRate}%)</td>
-        <td style="padding:6px 10px; text-align:right;">
-          ${formatKES(vatAmount)}
-        </td>
-      </tr>
-  
-      <tr>
-        <td style="padding:10px; font-weight:bold; border-top:2px solid #333;">
-          Total
-        </td>
-        <td style="padding:10px; text-align:right; font-weight:bold; border-top:2px solid #333;">
-          ${formatKES(grandTotal)}
-        </td>
-      </tr>
-  
-    </table>
-  </div>
+<tbody>
+${rows}
+</tbody>
 
-  <!-- FOOTER -->
-  <div style="margin-top:40px; text-align: left; font-size:12px; color:#888;">
-    Thank you for your business! <br>
-   <span style="font-size:9px;">
-     Generated by Kenya Tools Hub • ${APP_VERSION}
-   </span>
-  </div>
+</table>
+
+
+<!-- TOTALS -->
+<div style="
+margin-top:25px;
+display:flex;
+justify-content:flex-end;
+">
+
+<table style="
+border-collapse:collapse;
+min-width:260px;
+font-size:14px;
+">
+
+<tr>
+<td style="padding:6px 10px;">
+Subtotal
+</td>
+
+<td style="
+padding:6px 10px;
+text-align:right;
+">
+${formatMoney(subTotal)}
+</td>
+</tr>
+
+
+<tr>
+<td style="padding:6px 10px;">
+VAT (${vatRate}%)
+</td>
+
+<td style="
+padding:6px 10px;
+text-align:right;
+">
+${formatMoney(vatAmount)}
+</td>
+</tr>
+
+
+<tr>
+<td style="
+padding:10px;
+font-weight:bold;
+border-top:2px solid #333;
+">
+Total
+</td>
+
+<td style="
+padding:10px;
+text-align:right;
+font-weight:bold;
+border-top:2px solid #333;
+">
+${formatMoney(grandTotal)}
+</td>
+
+</tr>
+
+</table>
+</div>
+
+
+<!-- FOOTER -->
+<div class="footer">
+  Thank you for your business!<br>
+  <span style="font-size:9px;">
+    Generated by Kenya Tools Hub • ${APP_VERSION}
+  </span>
+</div>
 
 </div>
 `;
@@ -276,46 +502,9 @@ function previewInvoice() {
       <html>
         <head>
           <title>Preview</title>
-        <style>
-          @page {
-            size: A4;
-            margin: 0;
-          }
-        
-          body {
-            margin: 0;
-            background: #ccc;
-          }
-        
-          .invoice-container {
-            width: 210mm;
-            min-height: 297mm;
-            margin: 20px auto;
-            background: white;
-            padding: 20mm;
-            box-sizing: border-box;
-          }
-        
-          @media print {
-            body {
-              background: none;
-            }
-        
-            .invoice-container {
-              margin: 0;
-            }
-          }
-        
-          table {
-            width: 100%;
-            border-collapse: collapse;
-          }
-        
-          th, td {
-            border: 1px solid #ddd;
-            padding: 8px;
-          }
-        </style>
+         <style>
+          ${invoiceStyles()}
+         </style>
         </head>
         <body>
           ${buildInvoiceHTML(logo)}
@@ -341,45 +530,9 @@ function printInvoice() {
         <head>
           <title>Print</title>
           <style>
-            @page {
-              size: A4;
-              margin: 0;
-            }
-          
-            body {
-              margin: 0;
-              background: #ccc;
-            }
-          
-            .invoice-container {
-              width: 210mm;
-              min-height: 297mm;
-              margin: 20px auto;
-              background: white;
-              padding: 20mm;
-              box-sizing: border-box;
-            }
-          
-            @media print {
-              body {
-                background: none;
-              }
-          
-              .invoice-container {
-                margin: 0;
-              }
-            }
-          
-            table {
-              width: 100%;
-              border-collapse: collapse;
-            }
-          
-            th, td {
-              border: 1px solid #ddd;
-              padding: 8px;
-            }
-        </style>
+           ${invoiceStyles()}
+          </style>
+        </head>
         <body>
           ${buildInvoiceHTML(logo)}
         </body>
@@ -410,27 +563,12 @@ function downloadInvoice() {
     const fullHTML = `
       <html>
         <head>
-          <style>
-            body {
-              font-family: Arial;
-              width: 210mm;
-              margin: auto;
-              padding: 20px;
-            }
-
-            table {
-              border-collapse: collapse;
-              width: 100%;
-            }
-
-            th, td {
-              border: 1px solid #ddd;
-              padding: 8px;
-            }
-          </style>
+         <style>
+          ${pdfInvoiceStyles()}
+         </style>
         </head>
         <body>
-          ${buildInvoiceHTML(logo)}
+          ${buildInvoiceHTML(logo,true)}
         </body>
       </html>
     `;
@@ -440,14 +578,19 @@ function downloadInvoice() {
         doc.save(`invoice-${currentInvoiceNumber}.pdf`);
       },
       x: 20,
-      y: 20,
+      y: 15,
       width: 170,
-      windowWidth: 1024
+      windowWidth: 794,
+      html2canvas: {
+        scale: 2,
+        scrollY: 0,
+        useCORS: true
+      }
     });
   });
 }
 
-const APP_VERSION = "v1.3";
+const APP_VERSION = "v1.4";
 
 document.addEventListener("DOMContentLoaded", function() {
   
